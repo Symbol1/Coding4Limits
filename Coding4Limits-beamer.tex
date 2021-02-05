@@ -1,0 +1,432 @@
+% !TEX encoding = UTF-8 Unicode
+% !TEX TS-program = XeLaTeX
+% !TEX spellcheck = English
+% !TEX pdfSinglePage
+
+
+
+\documentclass[aspectratio=1610,14pt]{beamer}
+	\makeatletter
+	\overfullrule1em
+	\beamertemplatenavigationsymbolsempty
+	\setbeamercovered{transparent}
+	\setbeamersize{text margin left=3mm,text margin right=3mm}
+	\def\CMH{\gdef\beamer@currentmode{handout}}
+	\def\CMB{\gdef\beamer@currentmode{beamer}}
+	
+	\catcode`激13 \def激#1{\lccode`~`#1\lowercase{\catcode`#113\def~}}
+	激色#1!#2 {\definecolor{#1}{HTML}{#2}} % https://en.wikipedia.org/wiki/National_Taiwan_University#/media/File:National_Taiwan_University_seal.svg
+	色NTU Maroon!661E2A	色NTU Gold!B59D15	色NTU yellow!FDE8AA	色NTU green!B59D15	
+	\setbeamercolor{normal text}{bg=white,fg=black}
+	\setbeamercolor{structure}{fg=NTU Maroon}
+	\setbeamercolor{alerted text}{fg=NTU Gold}
+	\setbeamercolor{example text}{fg=NTU yellow}
+
+\usepackage{xurl}
+	\hypersetup{pdfsubject=Information Theory (cs.IT)}
+	\hypersetup{colorlinks,linkcolor=NTU Maroon,citecolor=NTU Gold,urlcolor=NTU green}
+
+\usepackage{mathtools}
+
+\usepackage[warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math}
+	\setmainfont{Times}
+	\setsansfont{HelveticaNeue-Light}
+	\setmonofont{Menlo}
+	\setmathfont[sans-style=literal]{texgyrepagella-math.otf}
+	
+	\DeclareMathOperator*\argmax{argmax}
+	\DeclareMathOperator*\mybest{do-my-best}
+	\DeclareMathOperator*\wt{wt}
+	\def\P{P_\mathrm e}
+	
+	\def\({\bigl(}	\def\){\bigr)}	激（{\Bigl(}		激）{\Bigr)}		
+	激［{\bigl[}		激］{\bigr]}		激「{\Bigl[}		激」{\Bigr]}		
+	激｛{\bigl\{}	激｝{\bigr\}}	激『{\Bigl\{}	激』{\Bigr\}}	
+	激【{\lvert}		激】{\rvert}	
+	
+	激㏒{\log}		激㏑{\ln}		
+	激ˆ{\hat}		激¯{\bar}		
+	激｜{\mid}		激：{\colon}		激；{\mathrel;\nobreak}		
+	激÷{\frac}		激√{\sqrt}		激¬{\limits}		
+	激†#1†{{\text{#1}}}				
+	激⋆{\raisebox{1ex}{$\star$}}
+	
+	\def\pp{\pause\par}
+	\advance\parskip\fill
+
+\usepackage{tikz,tikz-cd}
+	\let\PMP\pgfmathparse\def\PMR{\pgfmathresult}
+	\let\PMS\pgfmathsetmacro\let\PMT\pgfmathtruncatemacro\let\PMD\pgfmathdeclarefunction
+	% https://tex.stackexchange.com/q/420034/
+	\PMD*{axis_height}0{\begingroup\pgfmathreturn.25em\endgroup}
+	\PMD*{rule_thickness}0{\begingroup\pgfmathreturn.06em\endgroup}
+	\tikzset{
+		every picture/.style={cap=round,join=round,line width=rule_thickness},
+		% https://tex.stackexchange.com/q/146908/
+		alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
+		uncover/.style={alt=<#1>{}{opacity=.15}},
+	}
+
+\usepackage{pgfplotstable,booktabs,colortbl}
+	\pgfplotsset{compat/.cd,show suggested version=false,=1.17}
+	\pgfplotstableset{
+		every head row/.style={before row=\toprule,after row=\midrule},
+		every last row/.style={after row=\bottomrule},string type,
+	}
+	\def\arraystretch{1.5}
+
+\usepackage{pst-barcode}
+
+
+
+\title[Limits of Communication \& How to Achieve]
+	{The Fundamental Limits of Communication and How to Achieve Them}
+\author[H-P\ Wang]{Hsin-Po WANG}
+\institute{Department of Mathematics, University of Illinois at Urbana--Champaign}
+\date[2021-01]{2021-01-04 NTU Special Math Seminar}
+
+\begin{document}
+
+\frame\maketitle
+
+\makeatletter\defbeamertemplate*{sidebar right}{thinbold}{
+	\tikz[remember picture,overlay,x=3mm,y=\paperheight]{\footnotesize
+		\PMS\olfrac{\insertoverlaynumber/(\insertframeendpage+1-\insertframestartpage)}
+		\path[save path=\stare,yscale={1/max(\insertmainframenumber-1,1)}]
+			(-1,0)-|(0,1-\insertframenumber)-|+(-\olfrac,1)-|cycle;
+		\tikzset{banner/.pic={\node at(-.55,-.5)[rotate=-90]
+			{\beamer@shorttitle~\beamer@shortdate~\beamer@shortauthor};}}
+		\fill[use path=\stare,gray!50]pic[gray]{banner};
+		\clip[use path=\stare]pic[white]{banner};
+	}
+}
+
+%\CMH
+
+\frame{{1940s; Bell labs; Model V computer}
+	$$\includegraphics[width=10em]{ModelV.jpg}$$
+	\pp
+	Should the machine detect an error, it pauses.	\\
+	A person will come to fix it.	\\
+	That person does not work on weekends.
+}
+
+\frame{{1940s; Bell labs; Model V computer}
+	Richard W.\ Hamming (UIUC PhD 1942) usually ordered the machine	\\
+	to do complicated computation over the weekend,	\\
+	only to find on Monday that it was interrupted on Friday midnight.
+	\pp
+	Quote from an interview: \hfill{\tiny[ISBN:0883850370 p.17]}	\\
+	\itshape Damn it, if the machine can detect an error,	\\
+	why can't it locate the position of the error and \alert{correct} it?
+}
+
+\frame{{Hamming code}
+	For every 7 bits, instead of all 128 vectors, allow only the null space of
+	$$H=\begin{bmatrix}
+		1	&	1	&	1	&	1	&	0	&	0	&	0	\\
+		1	&	1	&	0	&	0	&	1	&	1	&	0	\\
+		1	&	0	&	1	&	0	&	1	&	0	&	1
+	\end{bmatrix}.$$
+	\pp
+	Let $¯x∈𝔽_2^7$ be a valid vector (codeword), that is, $H¯x=0$.	\\
+	If $¯y=¯x+¯e$ is the corrupted word, where $¯e$ contains one $1$ and six $0$'s,	\\
+	then $H¯y=H(¯x+¯e)=H¯e$ is the error position; flip that bit back.
+}
+
+\frame{{Performance of Hamming code}
+	Block length $N=7$ (how many bits are grouped together).
+	\pp
+	Code rate $R=4/7$ (how efficiently the information is recorded).
+	\pp
+	What could go wrong? When $¯e$ contains more than one $1$.	\\
+	How often will things go wrong?
+}
+\frame{{Probabilistic model}
+	Input is a random variable $X∈𝔽_2$; output is another $Y∈𝔽_2$.	\\
+	$Y$ is usually $X$; But $Y$ could be $1-X$ (flipped) with probability $p$.
+	\pp
+	$$\tikz{
+		\draw
+			(-3,2)node(a){\Large$1$}(3,2)node(+){\Large$1$}
+			(-3,0)node(b){\Large$0$}(3,0)node(-){\Large$0$}
+			(a)edge[->]node[above]{w.p.\ $1-p$}(+)
+			   edge[->]node[above,sloped,pos=.8]{w.p.\ $p$}(-)
+			(b)edge[->]node[below]{w.p.\ $1-p$}(-)
+			   edge[->]node[above,sloped,pos=.2]{w.p.\ $p$}(+)
+		;
+	}$$
+	Binary symmetric channel (BSC) with crossover probability $p$.
+}
+
+\frame{{Another probabilistic model}
+	Binary erasure channel (BEC) with erasure probability $p$.	\\
+	$Y$ is usually $X$; But $Y$ could be ``$?$'' (erased) with probability $p$.
+	$$\tikz[y=1cm]{
+		\draw
+			(-3,2)node(a){\Large$1$}(3,2)node(+){\Large$1$}
+									(3,1)node(?){\Large$?$}
+			(-3,0)node(b){\Large$0$}(3,0)node(-){\Large$0$}
+			(a)edge[->]node[above]{w.p.\ $1-p$}(+)
+			   edge[->]node[below,sloped,pos=.25]{w.p.\ $p$}(?)
+			(b)edge[->]node[below]{w.p.\ $1-p$}(-)
+			   edge[->]node[above,sloped,pos=.25]{w.p.\ $p$}(?)
+		;
+	}$$
+	\pp
+	In classical coding theory, BSC and BEC are the mental models.
+}
+
+\frame{{Coding $=$ encoding $+$ decoding}
+	Choose a \alert{codebook} $ℬ⊆𝔽_2^N$, the set of valid codewords.	\\
+	The inputs are limited to codewords in the codebook $¯X_1^N∈ℬ$.	\\
+	$¯X_1^N$ is shorthand for a vector $X_1X_2\dotsm X_N∈𝔽_2^N$.
+	\pp
+	Example: $ℬ≔\{0000,0111,1100\}⊆𝔽_2^3$ over BEC.	\\
+	See $0?00$ $⟹$ it must be $0000$ with one erasure.	\\\pause
+	See $1?0?$ $⟹$ it must be $1100$ with two erasures.	\\\pause
+	See $??00$ $⟹$ No idea; could be $0000$ or $1100$.
+}
+
+\frame{{More ambiguity}
+	Example: $ℬ≔\{0000,0111,1100\}⊆𝔽_2^3$ over BSC.	\\
+	See $0001$ $⟹$ it is most likely $0000$, likelihood $p(1-p)^3$;	\\\pause
+	$⟹$ but could be $0111$ with two flips, likelihood $p^2(1-p)^2$;	\\\pause
+	$⟹$ could also be $1100$ with \alert{three} flips, likelihood $p^3(1-p)$.
+	\pp
+	See $Y_1Y_2Y_3Y_4$ $⟹$ compute the likelihood for $x_1x_2x_3x_4∈ℬ$ by	\\
+	$ℙ(Y_1Y_2Y_3Y_4｜x_1x_2x_3x_4)=ℙ(Y_1｜x_1)ℙ(Y_2｜x_2)ℙ(Y_3｜x_3)ℙ(Y_4｜x_4)$,	\\
+	where $ℙ(Y_i｜x_i)$ equals $1-p$ if $Y_1=x_1$, or $p$ otherwise.
+	\pp
+	Find the $x_1x_2x_3x_4∈ℬ$ that maximizes the likelihood.
+}
+
+\frame{{Goal of coding}
+	A good codebook $ℬ$ should possess the following properties.
+	\pp
+	Small \alert{block length} $N$ $⟹$ recall $ℬ⊆𝔽_2^N$; shorter vectors, easier life.
+	\pp
+	Big $|ℬ|$ $⟹$ more codewords mean sending more information at once.	\\
+	In fact, it is $R≔\dfrac{\log_2|ℬ|}N$ that should be large;
+	this is the \alert{code rate}.
+	\pp
+	Low \alert{error probability} $P$ $⟹$ efforts are pointless if information is lost.
+}
+
+\frame{{Fundamental limit of coding}
+	Consider the parameter triple $(N,R,P)$	\\
+	(block length, code rate, error probability).
+	\pp
+	Shannon48:
+	You can find a series of block codes $ℬ_1,ℬ_2,ℬ_3,\dotsc$	\\
+	such that $N(ℬ_n)→∞$ and $R(ℬ_n)→C$ and $P(ℬ_n)→0$ as $n→∞$,	\\
+	where $C$ is a magic number that you cannot beat, provably.
+	\pp
+	$C$ is called the \alert{Shannon capacity}. It is the fundamental limit of coding.
+}
+
+\frame{{How to construct codebook}
+	Let $N$ be really large. Let $R≔C-ε$. We preset $|ℬ|=2^{RN}$.
+	\pp
+	Choose a random subset $ℬ⊆𝔽_2^{N}$ of that size. (It's just that easy!)
+	\pp
+	With high probability, any two distinct codewords in $ℬ$ are	\\
+	\alert{far away enough} such that you cannot (well$∼$) confuse them.
+}
+
+\frame{{What Shannon doesn't tell you}
+	Of course we can make $P$ (or $R$) arbitrarily close to $0$ (or $C$).	\\
+	But at what cost? If $N≥10^{100}$ is needed, the whole theory is useless.
+	\pp
+	Next step: understand the relation between $N$ and $P$ and $C-R$.
+}
+
+\frame{{The trend of $P$}
+	Fix a code rate $R<C$, error probability $P$ decays to $0$ really fast:
+	$$P≈e^{-Θ(N)}.$$
+	\pp
+	To get a feeling: $P=10^{-3}$ (once per hour) at $N=100$,	\\\pause
+	$P=10^{-6}$ (once per day) at $N=200$.	\\\pause
+	$P=10^{-9}$ (once per year) at $N=300$.	\\\pause
+	$P=10^{-12}$ (once per lifetime) at $N=400$.
+}
+
+\frame{{The trend of $R$}
+	Fix an error probability $P$, code rate $R$ approaches $C$ moderately fast:
+	$$R≈C-÷1{√N}.$$
+	\pp
+	$R=C-1/10$ at $N=100$ (CPU word).	\\\pause
+	$R=C-1/100$ at $N=10^4$ (internet package).	\\\pause
+	$R=C-1/1000$ at $N=10^6$ (least file size of linux).
+}
+
+\frame{{The joint trend of $P$ and $R$}
+	The trend of $P$ says $P≈e^{-Θ(N)}$; or equivalently $-\log P≈N$.	\\
+	The trend of $R$ says $C-R≈1/√N$; or equivalently $1/(C-R)^2≈N$.
+	\pp
+	A (natural) generalization
+	$$÷{-\log P}{(C-R)^2}≈N.$$
+}
+
+\frame{{Analog in probability theory}
+	Probability theory concerns sum of i.i.d.---$Z$ mean $μ$ variance $σ$.
+	\pp
+	Large deviations principle:	\\
+	Fix a $z$, then $ℙ『Z_1+Z_2+\dotsb+Z_N>N(μ+z)』=e^{-Θ(N)}$.
+	\pp
+	Central limit theory:	\\
+	$Z_1+Z_2+\dotsb+Z_N≈†Normal†\(μ,σ√N\)$; or equivalently $÷{∑Z}N≈μ±÷{Θ(1)}{√N}$.
+	\pp
+	Generalization: moderate deviations principle:	\\
+	$÷{-\logℙ｛Z_1+Z_2+\dotsb+Z_N>N(μ+ε_nz)｝}{ε_n^2}≈N$.
+}
+
+\frame{{Comparison}
+	\centering
+	\begin{tabular}{ccc}
+		\toprule
+			&Probability theory						&Coding theory					\\
+		\midrule
+		LLN	&$¯Z→μ$									&$(P,R)→(0,C)$					\\
+		LDP	&$ℙ\{¯Z-μ>z\}≈e^{-NI(z)}$				&$P≈e^{-E_†r†(R)N}$				\\
+		CLT	&$¯Z-μ∼†Normal†\(0,÷σ{√N}\)$			&$C-R≈÷{Q^{-1}(P)}{√{VN}}$		\\
+		MDP	&$÷{-\logℙ\{¯Z-μ>ε_Nz\}}{ε_N^2}≈NI(z)$	&$÷{-\log P}{(C-R)^2}≈÷N{2V}$	\\
+		\bottomrule
+	\end{tabular}
+}
+
+\frame{{What second-order theory doesn't tell you}
+	Of course we can make $P$ (or $R$) close to $0$ (or $C$)	\\
+	at the pace of $÷{-\log P}{(C-R)^2}≈÷N{2V}$, but at what cost?
+	\pp
+	Recall that we have to compute likelihoods (assuming i.i.d.\ channels)	\\
+	$ℙ(Y_1Y_2\dotsm Y_N｜x_1x_2\dotsm x_N)=ℙ(Y_1｜x_1)ℙ(Y_2｜x_2)\dotsmℙ(Y_N｜x_N)$	\\
+	and choose the maximizing $x_1x_2x_3x_4∈ℬ$.
+	\pp
+	Next step: how to maximize likelihood, \alert{easily}?
+}
+
+\frame{{Low complexity codes}
+	Engineers develop ``easy codes'' regardless of Shannon theory.
+	\pp
+	Reed--Muller (1954),
+	convolutional (1955),
+	Bose--Chaudhuri--Hocquenghem (1959),
+	Reed--Solomon (1960),
+	trellis modulation (1970s),
+	turbo (1990s),
+	low-density parity-check (1963 and 1996),
+	repeat-accumulate (1998),
+	fountain (1998),
+	and polar (2009).
+	\pp
+	Only polar codes and LDPC codes achieve first-order limit.
+}
+
+\frame{{Who achieves second-order limits?}
+	\centering
+	\begin{tabular}{ccc}
+		\toprule
+			&Coding theory					&Years								\\
+		\midrule
+		LLN	&$(P,R)→(0,C)$					&random 1948, polar 2009, LDPC 2014	\\
+		LDP	&$P≈e^{-E_†r†(R)N}$				&random 1961, polar 2009--14		\\
+		CLT	&$C-R≈÷{Q^{-1}(P)}{√{VN}}$		&random 1950, polar 2010--20		\\
+		MDP	&$÷{-\log P}{(C-R)^2}≈÷N{2V}$	&random 2014, polar 2016--20		\\
+		\bottomrule
+	\end{tabular}
+}
+
+\frame{{Polar codes key ideas}
+	Consider BEC with erasure probability $0<p<1$.
+	\pp
+	Polar transformation $p↦(p^2,2p-p^2)$, recursively.	\\
+	$p^2↦(p^4,2p^2-p^4)$ and $2p-p^2↦\((2p-p^2)^2,2(2p-p^2)-(2p-p^2)^2\)$.
+	\pp
+	Arıkan's martingale $Z_{n+1}=Z_n^2$ or $2Z_n-Z_n^2$ with equal probability.
+	\pp
+	Doob's martingale convergence theorem $Z_n→Z_∞∈\{0,1\}$.	\\
+	But how fast? (If it takes forever to converge the theory is useless.)
+}
+
+\frame{{Polar counterpart of LDP}
+	When $p$ is really really small, $p↦(p^2,p)$. That is, $\log p↦(2\log p,\log p)$,	\\
+	or $\log_2(-\log p)↦\(1+\log_2(-\log p),\log_2(-\log p)\)$.
+	\pp
+	With $1/2$ probability, $\log_2(-\log Z_n)$ increases by $1$, otherwise nothing.	\\
+	For those $Z_n$ that are small, $\log_2(-\log Z_n)≈n/2$; or $Z_n≈e^{-2^{n/2}}$.
+	\pp
+	With more advanced tricks, $Z_n≈e^{-ℓ^{0.99n}}$; this means $P≈e^{-N^{0.99}}$.
+}
+
+\frame{{Polar counterpart of CLT}
+	$√{Z_n(1-Z_n)}$ is a supermartingale. In fact, $𝔼［√{Z_n(1-Z_n)}］≈2^{-ρn}$.
+	\pp
+	This means that most of the times $√{Z_n(1-Z_n)}$ is really small,	\\
+	wherein either $Z_n$ is small or $1-Z_n$ is small.	\\
+	Those that are not small are of measure $2^{-ρn}$.
+	\pp
+	With more advanced tricks, $ℙ｛Z_n(1-Z_n)† not small†｝≈ℓ^{-0.49n}$;	\\
+	this means $C-R≈N^{-0.49}$.
+}
+
+\frame{{Polar counterpart of MDP}
+	When $Z_n(1-Z_n)$ is small, martingale is controlled by the LDP theory.	\\
+	When $Z_n(1-Z_n)$ is large, martingale is controlled by the CLT theory.
+	\pp
+	With positive measure, $Z_n$ goes back and forth between LDP and CLT.
+	\pp
+	With more advanced tricks, $÷{-\log P}{(C-R)^2}≈N^{0.99}.$
+}
+
+\frame{{Future works}
+	Complexity is $O(N\log N)$. With more advanced tricks $O(N\log\log N)$.	\\\pause
+	$⟹$ Can it be better?
+	\pp
+	Polar codes apply to many-to-one communication,	\\
+	one-to-many communication, and many others.	\\\pause
+	$⟹$ Generalize polar code to even more scenarios.
+	\pp
+	In some scenarios, random codes' best performance is still unclear.	\\\pause
+	$⟹$ Use polar to push random.
+}
+
+\frame{{Comment and questions}
+	?
+}
+
+\appendix
+
+\frame{{}
+	\begin{tabular}{c@{\hskip2\tabcolsep}ccc@{\hskip2\tabcolsep}cc}
+		\toprule
+				&\multicolumn3c{\hskip-2\tabcolsep Symmetric}
+				&\multicolumn2c{\hskip-1\tabcolsep Asymmetric}\\
+				&binary			&prime-ary		&finite		&binary		&finite	\\
+		\midrule
+		LLN		&Arikan09		&STA09i			&STA09i		&SRDR12		&			\\
+		LDP⋆	&AT09			&MT14			&Sasoglu11	&HY13		&			\\
+		CLT⋆	&KMTU10,MHU16	&BGNRS18		&			&			&			\\
+		MDP⋆	&GX15,MHU16		&BGS18			&			&			&			\\
+		LDP		&KSU10,HMTU13	&				&			&			&			\\
+		CLT		&FHMV18,GRY20	&				&			&			&			\\
+		MDP		&				&				&			&			&			\\
+		\bottomrule
+	\end{tabular}
+}
+
+\end{document}
+
+\frame{{Beamer and handout available at}
+	\centering
+	\begin{pspicture}(2in,2in)
+		\psbarcode{https://ntu.symbol.codes/}{width=2.0 height=2.0}{qrcode}
+	\end{pspicture}
+	
+	\url{https://ntu.symbol.codes/}
+}
+
+\end{document}
+
+
+
